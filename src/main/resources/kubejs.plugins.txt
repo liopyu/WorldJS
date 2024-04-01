@@ -1,0 +1,1 @@
+net.liopyu.worldjs.WorldJSPlugin
