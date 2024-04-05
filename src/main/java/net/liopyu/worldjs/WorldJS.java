@@ -11,8 +11,5 @@ public class WorldJS {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public WorldJS() {
-
     }
-
-
 }

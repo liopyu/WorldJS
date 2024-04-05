@@ -1,12 +1,15 @@
 package net.liopyu.worldjs.utils;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonElement;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import net.liopyu.worldjs.WorldJS;
-import net.liopyu.worldjs.api.IAdditionalConfiguredFeatureMethodHolder;
-import net.liopyu.worldjs.api.IAdditionalPlacedFeatureMethodHolder;
+import net.liopyu.worldjs.api.ICFeatureMethodHolder;
+import net.liopyu.worldjs.api.IPFeatureMethodHolder;
 import net.liopyu.worldjs.events.JsonDataEventJS;
-import net.liopyu.worldjs.events.forge.AddConfiguredFeatureMethods;
-import net.liopyu.worldjs.events.forge.AddPlacedFeatureMethods;
+import net.liopyu.worldjs.events.forge.AddCFeatureMethodsEvent;
+import net.liopyu.worldjs.events.forge.AddPFeatureMethodsEvent;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -37,31 +40,26 @@ public class DataUtils {
         }
     }
 
-    private static final ThreadLocal<@Nullable PlacedFeatureBuilder> pfb = new ThreadLocal<>();
+    public static <T> JsonElement encode(Codec<T> codec, T value) {
+        return codec.encodeStart(JsonOps.INSTANCE, value).get().left().get(); // If this is empty you're doing something wrong
+    }
+
+    // There should never be multiple threads with a different one so ThreadLocals shouldn't be necessary
+    @Nullable
+    private static PlacedFeatureBuilder pfb = null;
+    @Nullable
+    private static JsonDataEventJS jde = null;
 
     @ApiStatus.Internal
-    public static void setPfb(@Nullable PlacedFeatureBuilder pfb) {
-        DataUtils.pfb.set(pfb);
-    }
-
-    @Nullable
-    public static PlacedFeatureBuilder getCurrentPlacedFeatureBuilder() {
-        return pfb.get();
-    }
-
-    public static final Supplier<ImmutableMap<String, IAdditionalPlacedFeatureMethodHolder>> modPlacements = Lazy.of(() -> Util.make(new ImmutableMap.Builder<String, IAdditionalPlacedFeatureMethodHolder>(), b -> MinecraftForge.EVENT_BUS.post(new AddPlacedFeatureMethods(b))).build());
-
-    private static final ThreadLocal<@Nullable JsonDataEventJS> jde = new ThreadLocal<>();
-
+    public static void setPfb(@Nullable PlacedFeatureBuilder pfb) { DataUtils.pfb = pfb; }
     @ApiStatus.Internal
-    public static void setJde(@Nullable JsonDataEventJS jde) {
-        DataUtils.jde.set(jde);
-    }
+    public static void setJde(@Nullable JsonDataEventJS jde) { DataUtils.jde = jde; }
 
     @Nullable
-    public static JsonDataEventJS getCurrentJsonDataEventJS() {
-        return jde.get();
-    }
+    public static PlacedFeatureBuilder getCurrentPlacedFeatureBuilder() { return pfb; }
+    @Nullable
+    public static JsonDataEventJS getCurrentJsonDataEventJS() { return jde; }
 
-    public static final Supplier<ImmutableMap<String, IAdditionalConfiguredFeatureMethodHolder>> modConfiguredFeatures = Lazy.of(() -> Util.make(new ImmutableMap.Builder<String, IAdditionalConfiguredFeatureMethodHolder>(), b -> MinecraftForge.EVENT_BUS.post(new AddConfiguredFeatureMethods(b))).build());
+    public static final Supplier<ImmutableMap<String, IPFeatureMethodHolder>> modPlacements = Lazy.of(() -> Util.make(new ImmutableMap.Builder<String, IPFeatureMethodHolder>(), b -> MinecraftForge.EVENT_BUS.post(new AddPFeatureMethodsEvent(b))).build());
+    public static final Supplier<ImmutableMap<String, ICFeatureMethodHolder>> modConfiguredFeatures = Lazy.of(() -> Util.make(new ImmutableMap.Builder<String, ICFeatureMethodHolder>(), b -> MinecraftForge.EVENT_BUS.post(new AddCFeatureMethodsEvent(b))).build());
 }
