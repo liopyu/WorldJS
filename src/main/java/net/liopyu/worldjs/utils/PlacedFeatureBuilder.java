@@ -32,7 +32,7 @@ public class PlacedFeatureBuilder {
 
     @Generics(String.class)
     public ImmutableMap<String, IPFeatureMethodHolder> getMods() {
-        return DataUtils.modPlacements.get();
+        return DataUtils.modPlacementModifiers.get();
     }
 
     @Info(value = "Adds the given json object to the placed feature's list of placement modifiers")

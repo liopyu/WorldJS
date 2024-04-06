@@ -30,6 +30,7 @@ public class WorldJSPlugin extends KubeJSPlugin {
 
     @Override
     public void registerBindings(BindingsEvent event) {
+        event.add("WorldJS", WorldJSBindings.class);
         if (event.getType() == ScriptType.SERVER) {
             // This is here because dumb stuff relating to the server script manager not existing until the server starts
             // Oh, the pain it took to get to here in KubeJS TFC, if only this method had been I dunno, documented!

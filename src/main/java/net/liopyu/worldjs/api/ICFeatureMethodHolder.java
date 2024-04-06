@@ -5,7 +5,7 @@ import dev.latvian.mods.rhino.util.HideFromJS;
 import net.liopyu.worldjs.WorldJS;
 import net.liopyu.worldjs.events.JsonDataEventJS;
 import net.liopyu.worldjs.utils.DataUtils;
-import net.liopyu.worldjs.utils.PlacedFeatureBuilder;
+import net.liopyu.worldjs.utils.Placement;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Consumer;
@@ -40,7 +40,7 @@ public interface ICFeatureMethodHolder {
      * @param placement the definition of the <i>configured</i> feature's matching <i>placed</i> feature, if you do not wish to have a matching placed feature generated use {@link #finishFeature(String, String, JsonObject)}
      */
     @HideFromJS
-    default void finishFeature(String name, String type, JsonObject config, Consumer<PlacedFeatureBuilder> placement) {
+    default void finishFeature(String name, String type, JsonObject config, Placement placement) {
         final JsonDataEventJS event = DataUtils.getCurrentJsonDataEventJS();
         if (event != null) {
             event.finishFeature(name, type, config, placement);
@@ -57,7 +57,7 @@ public interface ICFeatureMethodHolder {
      * @param placement The definition of the configured feature's <i>placed</i> feature, if you do not wish to have a matching placed feature generated use {@link #finishFeature(String, String, JsonObject)}
      */
     @HideFromJS
-    default void finishFeature(String name, JsonObject configured, Consumer<PlacedFeatureBuilder> placement) {
+    default void finishFeature(String name, JsonObject configured, Placement placement) {
         final JsonDataEventJS event = DataUtils.getCurrentJsonDataEventJS();
         if (event != null) {
             event.finishFeature(name, configured, placement);
