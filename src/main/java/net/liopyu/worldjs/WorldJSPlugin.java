@@ -6,11 +6,16 @@ import dev.latvian.mods.kubejs.bindings.event.ServerEvents;
 import dev.latvian.mods.kubejs.script.BindingsEvent;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.util.ClassFilter;
+import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import net.liopyu.worldjs.events.EventHandlers;
 import net.liopyu.worldjs.events.forge.AddCFeatureMethodsEvent;
 import net.liopyu.worldjs.events.forge.AddPFeatureMethodsEvent;
 import net.liopyu.worldjs.internal.tests.TestCFeatureMethodHolder;
 import net.liopyu.worldjs.internal.tests.TestPFeatureMethodHolder;
+import net.liopyu.worldjs.utils.WorldJSTypeWrappers;
+import net.minecraft.util.valueproviders.FloatProvider;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 
@@ -31,7 +36,7 @@ public class WorldJSPlugin extends KubeJSPlugin {
     @Override
     public void registerBindings(BindingsEvent event) {
         event.add("WorldJS", WorldJSBindings.class);
-        if (event.getType() == ScriptType.SERVER) {
+        if (event.getType().isServer()) {
             // This is here because dumb stuff relating to the server script manager not existing until the server starts
             // Oh, the pain it took to get to here in KubeJS TFC, if only this method had been I dunno, documented!
             ServerEvents.HIGH_DATA.listenJava(ScriptType.SERVER, null, EventHandlers::handleJsonDataEvent);
@@ -51,5 +56,12 @@ public class WorldJSPlugin extends KubeJSPlugin {
     @Override
     public void registerEvents() {
         EventHandlers.WorldJSEvents.register();
+    }
+
+    @Override
+    public void registerTypeWrappers(ScriptType type, TypeWrappers typeWrappers) {
+        typeWrappers.register(FloatProvider.class, WorldJSTypeWrappers::floatProvider);
+        typeWrappers.register(BlockState.class, WorldJSTypeWrappers::blockState);
+        typeWrappers.register(BlockPredicate.class, WorldJSTypeWrappers::blockPredicate);
     }
 }

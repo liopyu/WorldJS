@@ -50,7 +50,7 @@ public class PlacedFeatureBuilder {
     })
     public void count(IntProvider intProvider) {
         final JsonObject json = initModifier("count");
-        json.add("count", DataUtils.encode(IntProvider.CODEC, intProvider));
+        json.add("count", DataUtils.encodeIntProvider(intProvider));
         placements.add(json);
     }
 
@@ -83,7 +83,7 @@ public class PlacedFeatureBuilder {
     })
     public void countOnEveryLayer(IntProvider intProvider) {
         final JsonObject json = initModifier("count_on_every_layer");
-        json.add("count", DataUtils.encode(IntProvider.CODEC, intProvider));
+        json.add("count", DataUtils.encodeIntProvider(intProvider));
         placements.add(json);
     }
 
@@ -133,7 +133,7 @@ public class PlacedFeatureBuilder {
         final JsonObject json = initModifier("noise_based_count");
         json.addProperty("noise_to_count_ratio", noiseToCountRatio);
         json.addProperty("noise_factor", noiseFactor);
-        json.addProperty("noiseOffset", noiseOffset);
+        json.addProperty("noise_offset", noiseOffset);
         placements.add(json);
     }
     

@@ -3,9 +3,9 @@ package net.liopyu.worldjs.utils;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import dev.latvian.mods.kubejs.util.UtilsJS;
 import net.liopyu.worldjs.WorldJS;
 import net.liopyu.worldjs.api.ICFeatureMethodHolder;
 import net.liopyu.worldjs.api.IPFeatureMethodHolder;
@@ -15,8 +15,10 @@ import net.liopyu.worldjs.events.forge.AddPFeatureMethodsEvent;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Lazy;
@@ -58,8 +60,8 @@ public class DataUtils {
         return array;
     }
 
-    public static JsonElement encodeBlockState(String state) {
-        return encode(BlockState.CODEC, UtilsJS.parseBlockState(state));
+    public static JsonElement encodeBlockState(BlockState state) {
+        return encode(BlockState.CODEC, state);
     }
 
     public static JsonElement encodeIntProvider(IntProvider provider) {
@@ -68,6 +70,39 @@ public class DataUtils {
 
     public static JsonElement encodeBlockPos(BlockPos pos) {
         return encode(BlockPos.CODEC, pos);
+    }
+
+    public static JsonElement encodeBlockPredicate(BlockPredicate predicate) {
+        return encode(BlockPredicate.CODEC, predicate);
+    }
+
+    public static JsonElement encodeFloatProvider(FloatProvider provider) {
+        return encode(FloatProvider.CODEC, provider);
+    }
+
+    public static JsonObject randomPatchConfig(@Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature) {
+        final JsonObject json = new JsonObject();
+        addProperty(json, "tires", tries);
+        addProperty(json, "xz_spread", xzSpread);
+        addProperty(json, "y_spread", ySpread);
+        json.addProperty("feature", placedFeature);
+        return json;
+    }
+
+    public static JsonObject countConfig(IntProvider count) {
+        final JsonObject json = new JsonObject();
+        json.add("count", encodeIntProvider(count));
+        return json;
+    }
+
+    public static void addProperty(JsonObject json, String property, @Nullable Number value) {
+        if (value != null) json.addProperty(property, value);
+    }
+    public static void addProperty(JsonObject json, String property, @Nullable Boolean value) {
+        if (value != null) json.addProperty(property, value);
+    }
+    public static void addProperty(JsonObject json, String property, @Nullable String value) {
+        if (value != null) json.addProperty(property, value);
     }
 
     // There should never be multiple of these at any one time, so ThreadLocals shouldn't be necessary

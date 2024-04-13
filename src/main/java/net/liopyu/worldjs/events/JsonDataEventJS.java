@@ -11,13 +11,17 @@ import dev.latvian.mods.kubejs.typings.Info;
 import dev.latvian.mods.kubejs.typings.Param;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import net.liopyu.worldjs.api.ICFeatureMethodHolder;
+import net.liopyu.worldjs.utils.Builders;
 import net.liopyu.worldjs.utils.DataUtils;
 import net.liopyu.worldjs.utils.PlacedFeatureBuilder;
 import net.liopyu.worldjs.utils.Placement;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * 
  * TODO:
  * {@link net.minecraft.world.level.levelgen.feature.Feature#TREE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#FLOWER}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#NO_BONEMEAL_FLOWER}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#RANDOM_PATCH}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#BLOCK_PILE}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#SPRING}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#FOSSIL}
@@ -39,35 +40,26 @@ import org.jetbrains.annotations.Nullable;
  * {@link net.minecraft.world.level.levelgen.feature.Feature#WATERLOGGED_VEGETATION_PATCH}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#ROOT_SYSTEM}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#MULTIFACE_GROWTH}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#UNDERWATER_MAGMA}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#DISK}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#LAKE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#END_SPIKE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#SEA_PICKLE}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#SIMPLE_BLOCK}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#HUGE_FUNGUS}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#NETHER_FOREST_VEGETATION}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#RANDOM_SELECTOR}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#SIMPLE_RANDOM_SELECTOR}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#RANDOM_BOOLEAN_SELECTOR}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#GEODE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#DRIPSTONE_CLUSTER}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#LARGE_DRIPSTONE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#POINTED_DRIPSTONE}
  *
  * Some things to keep in mind:
  * - It should be fine to use registry objects here
  * - RuleTest has a type wrapper
  * - BlockPos has a type wrapper
  * - IntProvider has a type wrapper
- * - BlockState doesn't have a wrapper for some reason --> Use {@link DataUtils#encodeBlockState(String)}
- * 
+ * - BlockState, BlockPredicate, FloatProvider have wrappers provided by us
+ *
  * Need:
  * - Wrapper/binding for
- *      - BlockPredicate
- *      - BlockStateProvider
- *      - FloatProvider (have int & number provider, but not float)
  *      - RuleBasedBlockStateProvider
+ *      - BlockStateProvider
  */
 @SuppressWarnings("unused")
 public class JsonDataEventJS extends EventJS {
@@ -156,6 +148,9 @@ public class JsonDataEventJS extends EventJS {
         add(DataUtils.placedFeatureName(name), Util.make(new PlacedFeatureBuilder(configuredFeatureToPlace), placement).toJson());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:no_op`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -166,6 +161,9 @@ public class JsonDataEventJS extends EventJS {
         add(DataUtils.configuredFeatureName(name), json);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:chorus_plant` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -174,6 +172,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "chorus_plant", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:chorus_plant`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -181,6 +182,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "chorus_plant", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:void_start_platform` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -189,6 +193,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "void_start_platform", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:void_start_platform`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -196,6 +203,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "void_start_platform", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:desert_well` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -204,6 +214,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "desert_well", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:desert_well`", params = {
         @Param(name = "name", value = NAME_DESC)
     })
@@ -211,6 +224,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "desert_well", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:ice_spike` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -219,6 +235,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "ice_spike", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:ice_spike`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -226,6 +245,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "ice_spike", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:glowstone_blob` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -234,6 +256,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "glowstone_blob", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:glowstone_blob`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -241,6 +266,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "glowstone_blob", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:freeze_top_layer` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -249,6 +277,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "freeze_top_layer", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:freeze_top_layer`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -256,6 +287,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "free_top_layer", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:vines` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -264,6 +298,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "vines", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:vines`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -271,6 +308,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "vines", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:monster_room` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -279,6 +319,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "monster_room", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:monster_room`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -286,6 +329,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "monster_room", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:blue_ice` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -294,6 +340,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "blue_ice", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:blue_ice`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -301,6 +350,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "blue_ice", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a configured feature of type `minecraft:end_island` nad the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -309,6 +361,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "end_island", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:end_island`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -316,6 +371,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "end_island", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:kelp` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -324,6 +382,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "kelp", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:kelp`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -331,6 +392,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "kelp", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:coral_tree` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -339,6 +403,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "coral_tree", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:coral_tree`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -346,6 +413,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "coral_tree", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:coral_mushroom` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -354,6 +424,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "coral_mushroom", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:coral_mushroom`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -361,6 +434,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "coral_mushroom", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:coral_claw` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -369,6 +445,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "coral_claw", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:coral_claw`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -376,6 +455,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "coral_claw", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:weeping_vines` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -384,6 +466,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "weeping_vines", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:weeping_vines`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -391,6 +476,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "weeping_vines", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:bonus_chest` and the matching placed feature", params = {
             @Param(name = "name", value = NAME_DESC),
             @Param(name = "placement", value = PLACEMENT_DESC)
@@ -399,6 +487,9 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "bonus_chest", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:bonus_chest`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -407,11 +498,17 @@ public class JsonDataEventJS extends EventJS {
     }
 
     // TODO: Everything beyond this point is undocumented
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:basalt_pillar` and the matching placed feature")
     public void basaltPillar(String name, Placement placement) {
         finishFeature(name, "basalt_pillar", new JsonObject(), placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration#CODEC}
+     */
     @Info(value = "Creates a new configured feature of type `minecraft:basalt_pillar`", params = {
             @Param(name = "name", value = NAME_DESC)
     })
@@ -419,11 +516,17 @@ public class JsonDataEventJS extends EventJS {
         finishFeature(name, "basalt_pillar", new JsonObject());
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SculkPatchConfiguration#CODEC}
+     */
     public void sculkPatch(String name, int chargeCount, int amountPerCharge, int spreadAttempts, int growthRounds, int spreadRounds, IntProvider extraRareGrowths, float catalystChance, Placement placement) {
         sculkPatch(name, chargeCount, amountPerCharge, spreadAttempts, growthRounds, spreadRounds, extraRareGrowths, catalystChance);
         placedFeature(name, placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SculkPatchConfiguration#CODEC}
+     */
     public void sculkPatch(String name, int chargeCount, int amountPerCharge, int spreadAttempts, int growthRounds, int spreadRounds, IntProvider extraRareGrowths, float catalystChance) {
         final JsonObject config = new JsonObject();
         config.addProperty("charge_count", chargeCount);
@@ -437,22 +540,35 @@ public class JsonDataEventJS extends EventJS {
     }
 
     // Mention WorldJSBindings#targetBlockState()
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ReplaceBlockConfiguration#CODEC}
+     */
     public void replaceSingleBlock(String name, OreConfiguration.TargetBlockState[] blockTargets, Placement placement) {
         replaceSingleBlock(name, blockTargets);
         placedFeature(name, placement);
     }
 
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ReplaceBlockConfiguration#CODEC}
+     */
     public void replaceSingleBlock(String name, OreConfiguration.TargetBlockState[] blockTargets) {
         final JsonObject config = new JsonObject();
         config.add("targets", DataUtils.encodeTargetBlockStateArray(blockTargets));
         finishFeature(name, "replace_single_block", config);
     }
 
+    /**
+     * {@link OreConfiguration#CODEC}
+     */
     public void ore(String name, OreConfiguration.TargetBlockState[] blockTargets, int size, float discardOnAirChance, boolean scattered, Placement placement) {
         ore(name, blockTargets, size, discardOnAirChance, scattered);
         placedFeature(name, placement);
     }
 
+    /**
+     * {@link OreConfiguration#CODEC}
+     */
     public void ore(String name, OreConfiguration.TargetBlockState[] blockTargets, int size, float discardOnAirChance, boolean scattered) {
         final JsonObject config = new JsonObject();
         config.add("targets", DataUtils.encodeTargetBlockStateArray(blockTargets));
@@ -460,38 +576,56 @@ public class JsonDataEventJS extends EventJS {
         config.addProperty("discard_chance_on_air_exposure", discardOnAirChance);
         finishFeature(name, scattered ? "scattered_ore" : "ore", config);
     }
-    
-    public void fillLayer(String name, int height, String blockState, Placement placement) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.LayerConfiguration#CODEC}
+     */
+    public void fillLayer(String name, int height, BlockState blockState, Placement placement) {
         fillLayer(name, height, blockState);
         placedFeature(name, placement);
     }
-    
-    public void fillLayer(String name, int height, String blockState) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.LayerConfiguration#CODEC}
+     */
+    public void fillLayer(String name, int height, BlockState blockState) {
         final JsonObject config = new JsonObject();
         config.addProperty("height", height);
         config.add("state", DataUtils.encodeBlockState(blockState));
         finishFeature(name, "fill_layer", config);
     }
-    
-    public void netherrackReplaceBlobs(String name, String targetState, String replaceState, IntProvider radius, Placement placement) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ReplaceSphereConfiguration#CODEC}
+     */
+    public void netherrackReplaceBlobs(String name, BlockState targetState, BlockState replaceState, IntProvider radius, Placement placement) {
         netherrackReplaceBlobs(name, targetState, replaceState, radius);
         placedFeature(name, placement);
     }
-    
-    public void netherrackReplaceBlobs(String name, String targetState, String replaceState, IntProvider radius) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ReplaceSphereConfiguration#CODEC}
+     */
+    public void netherrackReplaceBlobs(String name, BlockState targetState, BlockState replaceState, IntProvider radius) {
         final JsonObject config = new JsonObject();
         config.add("target", DataUtils.encodeBlockState(targetState));
         config.add("state", DataUtils.encodeBlockState(replaceState));
         config.add("radius", DataUtils.encodeIntProvider(radius));
         finishFeature(name, "netherrack_replace_blobs", config);
     }
-    
-    public void deltaFeature(String name, String contentsState, String rimState, IntProvider size, IntProvider rimSize, Placement placement) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.DeltaFeatureConfiguration#CODEC}
+     */
+    public void deltaFeature(String name, BlockState contentsState, BlockState rimState, IntProvider size, IntProvider rimSize, Placement placement) {
         deltaFeature(name, contentsState, rimState, size, rimSize);
         placedFeature(name, placement);
     }
-    
-    public void deltaFeature(String name, String contentsState, String rimState, IntProvider size, IntProvider rimSize) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.DeltaFeatureConfiguration#CODEC}
+     */
+    public void deltaFeature(String name, BlockState contentsState, BlockState rimState, IntProvider size, IntProvider rimSize) {
         final JsonObject config = new JsonObject();
         config.add("contents", DataUtils.encodeBlockState(contentsState));
         config.add("rim", DataUtils.encodeBlockState(rimState));
@@ -499,24 +633,36 @@ public class JsonDataEventJS extends EventJS {
         config.add("rimSize", DataUtils.encodeIntProvider(rimSize));
         finishFeature(name, "delta_feature", config);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ColumnFeatureConfiguration#CODEC}
+     */
     public void basaltColumns(String name, IntProvider reach, IntProvider height, Placement placement) {
         basaltColumns(name, reach, height);
         placedFeature(name, placement);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ColumnFeatureConfiguration#CODEC}
+     */
     public void basaltColumns(String name, IntProvider reach, IntProvider height) {
         final JsonObject config = new JsonObject();
         config.add("reach", DataUtils.encodeIntProvider(reach));
         config.add("height", DataUtils.encodeIntProvider(height));
         finishFeature(name, "basalt_columns", config);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.TwistingVinesConfig#CODEC}
+     */
     public void twistingVines(String name, int spreadWidth, int spreadHeight, int maxHeight, Placement placement) {
         twistingVines(name, spreadWidth, spreadHeight, maxHeight);
         placedFeature(name, placement);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.TwistingVinesConfig#CODEC}
+     */
     public void twistingVines(String name, int spreadWidth, int spreadHeight, int maxHeight) {
         final JsonObject config = new JsonObject();
         config.addProperty("spread_width", spreadWidth);
@@ -524,34 +670,52 @@ public class JsonDataEventJS extends EventJS {
         config.addProperty("max_height", maxHeight);
         finishFeature(name, "twisting_vines", config);
     }
-    
-    public void forestRock(String name, String state, Placement placement) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration#CODEC}
+     */
+    public void forestRock(String name, BlockState state, Placement placement) {
         forestRock(name, state);
         placedFeature(name, placement);
     }
-    
-    public void forestRock(String name, String state) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration#CODEC}
+     */
+    public void forestRock(String name, BlockState state) {
         final JsonObject config = new JsonObject();
         config.add("state", DataUtils.encodeBlockState(state));
         finishFeature(name, "forest_rock", config);
     }
-    
-    public void iceberg(String name, String state, Placement placement) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration#CODEC}
+     */
+    public void iceberg(String name, BlockState state, Placement placement) {
         iceberg(name, state);
         placedFeature(name, placement);
     }
-    
-    public void iceberg(String name, String state) {
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.BlockStateConfiguration#CODEC}
+     */
+    public void iceberg(String name, BlockState state) {
         final JsonObject config = new JsonObject();
         config.add("state", DataUtils.encodeBlockState(state));
         finishFeature(name, "iceberg", config);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.EndGatewayConfiguration#CODEC}
+     */
     public void endGateway(String name, @Nullable BlockPos exit, boolean exact, Placement placement) {
         endGateway(name, exit, exact);
         placedFeature(name, placement);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.EndGatewayConfiguration#CODEC}
+     */
     public void endGateway(String name, @Nullable BlockPos exit, boolean exact) {
         final JsonObject config = new JsonObject();
         if (exit != null) {
@@ -560,27 +724,283 @@ public class JsonDataEventJS extends EventJS {
         config.addProperty("exact", exact);
         finishFeature(name, "end_gateway", config);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ProbabilityFeatureConfiguration#CODEC}
+     */
     public void seaGrass(String name, float probability, Placement placement) {
         seaGrass(name, probability);
         placedFeature(name, placement);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ProbabilityFeatureConfiguration#CODEC}
+     */
     public void seaGrass(String name, float probability) {
         final JsonObject config = new JsonObject();
         config.addProperty("probability", probability);
         finishFeature(name, "seagrass", config);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ProbabilityFeatureConfiguration#CODEC}
+     */
     public void bamboo(String name, float probability, Placement placement) {
         bamboo(name, probability);
         placedFeature(name, placement);
     }
-    
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.ProbabilityFeatureConfiguration#CODEC}
+     */
     public void bamboo(String name, float probability) {
         final JsonObject config = new JsonObject();
         config.addProperty("probability", probability);
         finishFeature(name, "bamboo", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration#CODEC}
+     */
+    public void flower(String name, @Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature, Placement placement) {
+        flower(name, tries, xzSpread, ySpread, placedFeature);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration#CODEC}
+     */
+    public void flower(String name, @Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature) {
+        finishFeature(name, "flower", DataUtils.randomPatchConfig(tries, xzSpread, ySpread, placedFeature));
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration#CODEC}
+     */
+    public void noBonemealFlower(String name, @Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature, Placement placement) {
+        noBonemealFlower(name, tries, xzSpread, ySpread, placedFeature);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration#CODEC}
+     */
+    public void noBonemealFlower(String name, @Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature) {
+        finishFeature(name, "no_bonemeal_flower", DataUtils.randomPatchConfig(tries, xzSpread, ySpread, placedFeature));
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration#CODEC}
+     */
+    public void randomPatch(String name, @Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature, Placement placement) {
+        randomPatch(name, tries, xzSpread, ySpread, placedFeature);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration#CODEC}
+     */
+    public void randomPatch(String name, @Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature) {
+        finishFeature(name, "random_patch", DataUtils.randomPatchConfig(tries, xzSpread, ySpread, placedFeature));
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.UnderwaterMagmaConfiguration#CODEC}
+     */
+    public void underwaterMagma(String name, int searchRange, int placementRadius, float placementProbability, Placement placement) {
+        underwaterMagma(name, searchRange, placementRadius, placementProbability);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.UnderwaterMagmaConfiguration#CODEC}
+     */
+    public void underwaterMagma(String name, int searchRange, int placementRadius, float placementProbability) {
+        final JsonObject config = new JsonObject();
+        config.addProperty("floor_search_range", searchRange);
+        config.addProperty("placement_radius_around_floor", placementRadius);
+        config.addProperty("placement_probability_per_valid_position", placementProbability);
+        finishFeature(name, "underwater_magma", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SpikeConfiguration#CODEC}
+     */
+    public void endSpike(String name, @Nullable Boolean invulnerableCrystal, Builders.EndSpike.Builder endSpikes, @Nullable BlockPos beamTarget, Placement placement) {
+        endSpike(name, invulnerableCrystal, endSpikes, beamTarget);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SpikeConfiguration#CODEC}
+     */
+    public void endSpike(String name, @Nullable Boolean invulnerableCrystal, Builders.EndSpike.Builder endSpikes, @Nullable BlockPos beamTarget) {
+        final JsonObject config = new JsonObject();
+        DataUtils.addProperty(config, "crystal_invulnerable", invulnerableCrystal);
+        config.add("spikes", Util.make(new Builders.EndSpike(), endSpikes).write());
+        if (beamTarget != null) {
+            config.add("crystal_beam_target", DataUtils.encodeBlockPos(beamTarget));
+        }
+        finishFeature(name, "end_spike", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.CountConfiguration#CODEC}
+     */
+    public void seaPickle(String name, IntProvider count, Placement placement) {
+        seaPickle(name, count);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.CountConfiguration#CODEC}
+     */
+    public void seaPickle(String name, IntProvider count) {
+        finishFeature(name, "sea_pickle", DataUtils.countConfig(count));
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.HugeFungusConfiguration#CODEC}
+     */
+    public void hugeFungus(String name, BlockState baseBlock, BlockState stem, BlockState hat, BlockState decor, BlockPredicate replaceableBlocks, boolean planted, Placement placement) {
+        hugeFungus(name, baseBlock, stem, hat, decor, replaceableBlocks, planted);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.HugeFungusConfiguration#CODEC}
+     */
+    public void hugeFungus(String name, BlockState baseBlock, BlockState stem, BlockState hat, BlockState decor, BlockPredicate replaceableBlocks, boolean planted) {
+        final JsonObject config = new JsonObject();
+        config.add("valid_base_block", DataUtils.encodeBlockState(baseBlock));
+        config.add("stem_state", DataUtils.encodeBlockState(stem));
+        config.add("hat_state", DataUtils.encodeBlockState(hat));
+        config.add("decor_state", DataUtils.encodeBlockState(decor));
+        config.add("replaceable_blocks", DataUtils.encodeBlockPredicate(replaceableBlocks));
+        config.addProperty("planted", planted);
+        finishFeature(name, "huge_fungus", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.DripstoneClusterConfiguration#CODEC}
+     */
+    public void dripstoneCluster(
+            String name,
+            int searchRange,
+            IntProvider height,
+            IntProvider radius,
+            int maxHeightDifference,
+            int heightDeviation,
+            IntProvider dripstoneBlockLayerThickness,
+            FloatProvider density,
+            FloatProvider wetness,
+            float chanceOfColumnAtMaxDistFromCenter,
+            int maxDistFromEdgeAffectingChanceOfDripstoneColumn,
+            int maxDistFromCenterAffectingHeightBias,
+            Placement placement
+    ) {
+        dripStoneCluster(name, searchRange, height, radius, maxHeightDifference, heightDeviation, dripstoneBlockLayerThickness, density, wetness, chanceOfColumnAtMaxDistFromCenter, maxDistFromEdgeAffectingChanceOfDripstoneColumn, maxDistFromCenterAffectingHeightBias);
+        placedFeature(name, placement);
+    }
+
+    // Awful
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.DripstoneClusterConfiguration#CODEC}
+     */
+    public void dripStoneCluster(
+            String name,
+            int searchRange,
+            IntProvider height,
+            IntProvider radius,
+            int maxHeightDifference,
+            int heightDeviation,
+            IntProvider dripstoneBlockLayerThickness,
+            FloatProvider density,
+            FloatProvider wetness,
+            float chanceOfColumnAtMaxDistFromCenter,
+            int maxDistFromEdgeAffectingChanceOfDripstoneColumn,
+            int maxDistFromCenterAffectingHeightBias
+    ) {
+        final JsonObject config = new JsonObject();
+        config.addProperty("floor_to_ceiling_search_range", searchRange);
+        config.add("height", DataUtils.encodeIntProvider(height));
+        config.add("radius", DataUtils.encodeIntProvider(radius));
+        config.addProperty("max_stalagmite_stalactite_height_diff", maxHeightDifference);
+        config.addProperty("height_deviation", heightDeviation);
+        config.add("dripstone_block_layer_thickness", DataUtils.encodeIntProvider(dripstoneBlockLayerThickness));
+        config.add("density", DataUtils.encodeFloatProvider(density));
+        config.add("wetness", DataUtils.encodeFloatProvider(wetness));
+        config.addProperty("chance_of_dripstone_column_at_max_distance_from_center", chanceOfColumnAtMaxDistFromCenter);
+        config.addProperty("max_distance_from_edge_affecting_chance_of_dripstone_column", maxDistFromEdgeAffectingChanceOfDripstoneColumn);
+        config.addProperty("max_distance_from_center_affecting_height_bias", maxDistFromCenterAffectingHeightBias);
+        finishFeature(name, "dripstone_cluster", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.LargeDripstoneConfiguration#CODEC}
+     */
+    public void largeDripstone(
+            String name,
+            int searchRange,
+            IntProvider columnRadius,
+            FloatProvider heightScale,
+            float maxColumnRadiusToCaveHeightRatio,
+            FloatProvider stalactiteBluntness,
+            FloatProvider stalagmiteBluntness,
+            FloatProvider windSpeed,
+            int minWindRadius,
+            float minWindBluntness,
+            Placement placement
+    ) {
+        largeDripstone(name, searchRange, columnRadius, heightScale, maxColumnRadiusToCaveHeightRatio, stalactiteBluntness, stalagmiteBluntness, windSpeed, minWindRadius, minWindBluntness);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.LargeDripstoneConfiguration#CODEC}
+     */
+    public void largeDripstone(
+            String name,
+            int searchRange,
+            IntProvider columnRadius,
+            FloatProvider heightScale,
+            float maxColumnRadiusToCaveHeightRatio,
+            FloatProvider stalactiteBluntness,
+            FloatProvider stalagmiteBluntness,
+            FloatProvider windSpeed,
+            int minWindRadius,
+            float minWindBluntness
+    ) {
+        final JsonObject config = new JsonObject();
+        config.addProperty("floor_to_ceiling_search_range", searchRange);
+        config.add("column_radius", DataUtils.encodeIntProvider(columnRadius));
+        config.add("height_scale", DataUtils.encodeFloatProvider(heightScale));
+        config.addProperty("max_column_radius_to_cave_height_ratio", maxColumnRadiusToCaveHeightRatio);
+        config.add("stalactite_bluntness", DataUtils.encodeFloatProvider(stalactiteBluntness));
+        config.add("stalagmite_bluntness", DataUtils.encodeFloatProvider(stalagmiteBluntness));
+        config.add("wind_speed", DataUtils.encodeFloatProvider(windSpeed));
+        config.addProperty("min_radius_for_wind", minWindRadius);
+        config.addProperty("min_bluntness_for_wind", minWindBluntness);
+        finishFeature(name, "large_dripstone", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.PointedDripstoneConfiguration#CODEC}
+     */
+    public void pointedDripstone(String name, @Nullable Float tallerDripstoneChance, @Nullable Float directionalSpreadChance, @Nullable Float spreadRadius2Chance, @Nullable Float spreadRadius3Chance, Placement placement) {
+        pointedDripstone(name, tallerDripstoneChance, directionalSpreadChance, spreadRadius2Chance, spreadRadius3Chance);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.PointedDripstoneConfiguration#CODEC}
+     */
+    public void pointedDripstone(String name, @Nullable Float tallerDripstoneChance, @Nullable Float directionalSpreadChance, @Nullable Float spreadRadius2Chance, @Nullable Float spreadRadius3Chance) {
+        final JsonObject config = new JsonObject();
+        DataUtils.addProperty(config, "chance_of_taller_dripstone", tallerDripstoneChance);
+        DataUtils.addProperty(config, "chance_of_directional_spread", directionalSpreadChance);
+        DataUtils.addProperty(config, "chance_of_spread_radius2", spreadRadius2Chance);
+        DataUtils.addProperty(config, "chance_of_spread_radius3", spreadRadius3Chance);
+        finishFeature(name, "pointed_dripstone", config);
     }
 
     @Override
