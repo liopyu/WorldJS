@@ -1,12 +1,20 @@
 package net.liopyu.worldjs;
 
-import dev.latvian.mods.kubejs.util.UtilsJS;
+import net.liopyu.worldjs.utils.Builders;
+import net.minecraft.Util;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraft.world.level.levelgen.structure.templatesystem.RuleTest;
 
 public class WorldJSBindings {
 
-    public static OreConfiguration.TargetBlockState targetBlockState(RuleTest target, String blockState) {
-        return OreConfiguration.target(target, UtilsJS.parseBlockState(blockState));
+    public static OreConfiguration.TargetBlockState targetBlockState(RuleTest target, BlockState blockState) {
+        return OreConfiguration.target(target, blockState);
+    }
+
+    public static RuleBasedBlockStateProvider ruleBasedBlockStateProvider(BlockStateProvider fallback, Builders.BlockStateProviderRules.Builder rules) {
+        return new RuleBasedBlockStateProvider(fallback, Util.make(new Builders.BlockStateProviderRules(), rules).rules);
     }
 }

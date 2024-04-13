@@ -8,13 +8,11 @@ import net.liopyu.worldjs.utils.DataUtils;
 import net.liopyu.worldjs.utils.Placement;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.function.Consumer;
-
 public interface ICFeatureMethodHolder {
 
     /**
      * Adds the given json object to the virtual datapack, it is recommended that one of the <b>#finishFeature</b>
-     * ({@link #finishFeature(String, String, JsonObject) 1}, {@link #finishFeature(String, String, JsonObject, Consumer) 2}, {@link #finishFeature(String, JsonObject, Consumer) 3})
+     * ({@link #finishFeature(String, String, JsonObject) 1}, {@link #finishFeature(String, String, JsonObject, Placement) 2}, {@link #finishFeature(String, JsonObject, Placement) 3})
      * methods be used over this as they automatically place files into the correct placed/configured feature folders
      * @param id The fully qualified path of the added data
      * @param data the data to be added to the pack
@@ -31,7 +29,7 @@ public interface ICFeatureMethodHolder {
     }
 
     /**
-     * See {@link JsonDataEventJS#genericFeature(String, String, JsonObject, Consumer)}
+     * See {@link JsonDataEventJS#genericFeature(String, String, JsonObject, Placement)}
      *
      * Finishes a matching pair of configured an placed features
      * @param name The unqualified name of the features (e.g. 'kubejs:tree/spectral', 'spectral_mass'), usually passed from a matching param in a JS visible method

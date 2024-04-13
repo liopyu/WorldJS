@@ -55,11 +55,12 @@ import org.jetbrains.annotations.Nullable;
  * - BlockPos has a type wrapper
  * - IntProvider has a type wrapper
  * - BlockState, BlockPredicate, FloatProvider have wrappers provided by us
+ * - OreConfiguration$TargetBlockState, RuleBasedBlockStateProvider can be created
  *
  * Need:
  * - Wrapper/binding for
- *      - RuleBasedBlockStateProvider
  *      - BlockStateProvider
+ *      - FluidState
  */
 @SuppressWarnings("unused")
 public class JsonDataEventJS extends EventJS {

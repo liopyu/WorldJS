@@ -5,8 +5,8 @@ import com.mojang.serialization.JsonOps;
 import dev.latvian.mods.kubejs.block.state.BlockStatePredicate;
 import dev.latvian.mods.kubejs.registry.RegistryInfo;
 import dev.latvian.mods.kubejs.script.ScriptType;
-import dev.latvian.mods.kubejs.util.JsonIO;
 import dev.latvian.mods.kubejs.util.ListJS;
+import dev.latvian.mods.kubejs.util.MapJS;
 import dev.latvian.mods.kubejs.util.UtilsJS;
 import dev.latvian.mods.rhino.Context;
 import net.minecraft.core.Direction;
@@ -14,18 +14,23 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.InclusiveRange;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.util.valueproviders.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.feature.stateproviders.*;
 import net.minecraft.world.level.levelgen.heightproviders.*;
+import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -147,7 +152,7 @@ public class WorldJSTypeWrappers {
         return BlockPredicate.not(BlockPredicate.alwaysTrue());
     }
 
-    public static BlockState blockState(Context cx, @Nullable Object o) {
+    public static <T extends Comparable<T>> BlockState blockState(Context cx, @Nullable Object o) {
         if (o == null) {
             return Blocks.AIR.defaultBlockState();
         } else if (o instanceof BlockState state) {
@@ -156,17 +161,38 @@ public class WorldJSTypeWrappers {
             return block.defaultBlockState();
         } else if (o instanceof CharSequence) {
             return UtilsJS.parseBlockState(o.toString());
+        } else if (o instanceof Map<?,?> map) {
+            final Object possibleBlock = GeneralUtils.getFirstOfKeys(map, "name", "Name", "block", "base"); // Pls only pass in a string here k thx
+            BlockState state = (possibleBlock == null ? Blocks.AIR : RegistryInfo.BLOCK.getValue(new ResourceLocation(String.valueOf(possibleBlock)))).defaultBlockState();
+            final Object key = GeneralUtils.getFirstKeyMapHas(map, "properties", "Properties", "states", "values", "state");
+            if (key != null) {
+                final Map<?, ?> propertiesMap = MapJS.of(map.get(key));
+                if (propertiesMap != null) {
+                    final Collection<Property<?>> stateProperties = state.getProperties();
+                    final AtomicReference<BlockState> stateReference = new AtomicReference<>(state);
+                    for (Property<?> property : stateProperties) {
+                        final Property<T> castedProperty = UtilsJS.cast(property);
+                        if (propertiesMap.containsKey(castedProperty.getName())) {
+                            castedProperty.getValue(String.valueOf(propertiesMap.get(castedProperty.getName()))).ifPresent(value -> stateReference.set(stateReference.get().setValue(castedProperty, value)));
+                        }
+                    }
+                    state = stateReference.get();
+                }
+            }
+            return state;
+        } else if (o instanceof JsonElement json) {
+            final AtomicReference<BlockState> returned = new AtomicReference<>(Blocks.AIR.defaultBlockState());
+            BlockState.CODEC.decode(JsonOps.INSTANCE, json).get().map(l -> {
+                returned.set(l.getFirst());
+                return l;
+            }, r -> {
+                ScriptType.getCurrent(cx).console.warn("Unable to parse block state json" + json + " into a BlockState");
+                return r;
+            });
+            return returned.get();
         }
 
-        final AtomicReference<BlockState> returned = new AtomicReference<>(Blocks.AIR.defaultBlockState());
-        BlockState.CODEC.decode(JsonOps.INSTANCE, JsonIO.of(o)).get().map(l -> {
-            returned.set(l.getFirst());
-            return l;
-        }, r -> {
-            ScriptType.getCurrent(cx).console.warn("Unable to parse block state " + o + " into a BlockState");
-            return r;
-        });
-        return returned.get();
+        return Blocks.AIR.defaultBlockState();
     }
 
     public static HeightProvider heightProvider(Context cx, @Nullable Object o) {
@@ -188,7 +214,7 @@ public class WorldJSTypeWrappers {
             final String type = String.valueOf(map.get("type"));
             return switch (type) {
                 case "constant" -> ConstantHeight.of(verticalAnchor(cx, map.get("anchor")));
-                case "bottom_bias", "biased_to_bottom", "biasedToBottom" -> {
+                case "bottom_bias", "biased_to_bottom", "biasedToBottom", "bottomBias" -> {
                     final boolean very = map.containsKey("very") ? ((Boolean) map.get("very")) : false;
                     final int inner = map.containsKey("inner") ? ((Number) map.get("inner")).intValue() : 1;
                     yield very ?
@@ -249,5 +275,155 @@ public class WorldJSTypeWrappers {
         }
 
         return VerticalAnchor.absolute(0);
+    }
+    
+    public static BlockStateProvider blockStateProvider(Context cx, @Nullable Object o) {
+        if (o instanceof BlockStateProvider provider) {
+            return provider;
+        } else if (o instanceof BlockState state) {
+            return BlockStateProvider.simple(state);
+        } else if (o instanceof Block block) {
+            return BlockStateProvider.simple(block);
+        } else if (o instanceof CharSequence) {
+            return BlockStateProvider.simple(UtilsJS.parseBlockState(o.toString()));
+        } else if (o instanceof JsonElement json) {
+            final AtomicReference<BlockStateProvider> returned = new AtomicReference<>(BlockStateProvider.simple(Blocks.AIR));
+            BlockStateProvider.CODEC.decode(JsonOps.INSTANCE, json).get().map(l -> {
+                returned.set(l.getFirst());
+                return l;
+            }, r -> {
+                ScriptType.getCurrent(cx).console.warn("Unable to parse block state provider json " + json + " into a BlockStateProvider");
+                return r;
+            });
+            return returned.get();
+        } else if (o instanceof Map<?,?> map) {
+            final String type = String.valueOf(map.get("type"));
+            return switch (type) {
+                case "simple", "block", "state", "blockstate" -> BlockStateProvider.simple(blockState(cx, map.get("state")));
+                case "dual_noise", "dualNoise" -> {
+                    final BasicNoiseHolder holder = BasicNoiseHolder.fromMap(map, cx);
+                    final List<BlockState> states = new ArrayList<>();
+                    final List<?> objects = ListJS.orSelf(map.get("states"));
+                    for (Object obj : objects) {
+                        states.add(blockState(cx, obj));
+                    }
+                    final IntProvider variety = UtilsJS.intProviderOf(map.get("variety")); // Cheeky way of getting around dealing with that
+                    yield new DualNoiseProvider(
+                            new InclusiveRange<>(variety.getMinValue(), variety.getMaxValue()),
+                            noiseParameters(cx, map.get("slow_noise_parameters")),
+                            ((Number) map.get("slow_scale")).floatValue(),
+                            holder.seed,
+                            holder.parameters,
+                            holder.scale,
+                            states
+                    );
+                }
+                case "noise" -> {
+                    final BasicNoiseHolder holder = BasicNoiseHolder.fromMap(map, cx);
+                    final List<BlockState> states = new ArrayList<>();
+                    final List<?> objects = ListJS.orSelf(map.get("states"));
+                    for (Object obj : objects) {
+                        states.add(blockState(cx, obj));
+                    }
+                    yield new NoiseProvider(holder.seed, holder.parameters, holder.scale, states);
+                }
+                case "noise_threshold", "noiseThreshold" -> {
+                    final BasicNoiseHolder holder = BasicNoiseHolder.fromMap(map, cx);
+                    final List<BlockState> lowStates = new ArrayList<>();
+                    final List<?> lowObjects = ListJS.orSelf(GeneralUtils.getFirstOfKeys(map, "low_states", "low", "lowStates"));
+                    for (Object obj : lowObjects) {
+                        lowStates.add(blockState(cx, obj));
+                    }
+                    final List<BlockState> highStates = new ArrayList<>();
+                    final List<?> highObjects = ListJS.orSelf(GeneralUtils.getFirstOfKeys(map, "high_states", "high", "highStates"));
+                    for (Object obj : highObjects) {
+                        highStates.add(blockState(cx, obj));
+                    }
+                    yield new NoiseThresholdProvider(
+                            holder.seed,
+                            holder.parameters,
+                            holder.scale,
+                            ((Number) map.get("threshold")).floatValue(),
+                            ((Number) GeneralUtils.getFirstOfKeys(map, "high_chance", "highChance")).floatValue(),
+                            blockState(cx, map.get("default_state")),
+                            lowStates,
+                            highStates
+                    );
+                }
+                case "random_int", "randomInt" -> new RandomizedIntStateProvider(
+                        blockStateProvider(cx, map.get("source")),
+                        String.valueOf(map.get("property")),
+                        UtilsJS.intProviderOf(map.get("values"))
+                );
+                case "rotated_block", "rotatedBlock", "rotated" -> new RotatedBlockProvider(RegistryInfo.BLOCK.getValue(new ResourceLocation(String.valueOf(map.get("block")))));
+                case "list", "weighted_list", "weightedList", "simple_weighted_list", "simpleWeightedList", "weighted" -> {
+                    final SimpleWeightedRandomList.Builder<BlockState> builder = SimpleWeightedRandomList.builder();
+                    final List<?> objects = ListJS.orSelf(map.get("states"));
+                    for (Object obj : objects) {
+                        builder.add(blockState(cx, obj), obj instanceof Map<?,?> subMap && subMap.containsKey("weight") ? ((Number) subMap.get("weight")).intValue() : 1);
+                    }
+                    yield new WeightedStateProvider(builder);
+                }
+                default -> BlockStateProvider.simple(Blocks.AIR);
+            };
+        }
+
+        return BlockStateProvider.simple(Blocks.AIR);
+    }
+
+    private record BasicNoiseHolder(long seed, NormalNoise.NoiseParameters parameters, float scale) {
+
+        static BasicNoiseHolder fromMap(Map<?, ?> map, Context cx) {
+            return new BasicNoiseHolder(
+                    ((Number) map.get("seed")).longValue(),
+                    noiseParameters(cx, map.get("parameters")),
+                    ((Number) map.get("scale")).floatValue()
+            );
+        }
+    }
+
+    public static NormalNoise.NoiseParameters noiseParameters(Context cx, @Nullable Object o) {
+        if (o instanceof NormalNoise.NoiseParameters parameters) {
+            return parameters;
+        } else if (o instanceof JsonElement json) {
+            final AtomicReference<NormalNoise.NoiseParameters> returned = new AtomicReference<>(new NormalNoise.NoiseParameters(0, 0D));
+            NormalNoise.NoiseParameters.CODEC.decode(JsonOps.INSTANCE, json).get().map(l -> {
+                returned.set(l.getFirst().get());
+                return l;
+            }, r -> {
+                ScriptType.getCurrent(cx).console.warn("Unable to parse noise parameters json " + json + " into a NoiseParameters");
+                return r;
+            });
+            return returned.get();
+        } else if (o instanceof List<?> list) {
+            final List<Number> numbers = new ArrayList<>();
+            for (Object obj : list) {
+                if (obj instanceof Number num) {
+                    numbers.add(num);
+                }
+            }
+            while (numbers.size() < 2) {
+                numbers.add(0); // I hate this, but It Just Works™
+            }
+            final double[] otherAmplitudes = new double[numbers.size() - 2];
+            for (int i = 0 ; i < otherAmplitudes.length ; i++) {
+                otherAmplitudes[i] = numbers.get(i + 2).doubleValue();
+            }
+            return new NormalNoise.NoiseParameters(numbers.get(0).intValue(), numbers.get(1).doubleValue(), otherAmplitudes);
+        } else if (o instanceof Map<?,?> map) {
+            final int firstOctave = ((Number) GeneralUtils.getFirstOfKeys(map, "first_octave", "firstOctave")).intValue();
+            final List<Double> doubles = ListJS.orSelf(map.get("amplitudes")).stream().filter(v -> v instanceof Number).map(v -> ((Number) v).doubleValue()).toList();
+            if (doubles.size() == 1) {
+                return new NormalNoise.NoiseParameters(firstOctave, doubles.get(0));
+            } else {
+                final double[] doublesArray = new double[doubles.size() - 1];
+                for (int i = 0 ; i < doublesArray.length ; i++) {
+                    doublesArray[i] = doubles.get(i + 1);
+                }
+                return new NormalNoise.NoiseParameters(firstOctave, doubles.get(0), doublesArray);
+            }
+        }
+
+        return new NormalNoise.NoiseParameters(0, 0D);
     }
 }

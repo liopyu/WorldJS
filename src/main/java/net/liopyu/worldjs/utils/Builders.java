@@ -2,7 +2,10 @@ package net.liopyu.worldjs.utils;
 
 import com.google.gson.JsonElement;
 import dev.latvian.mods.rhino.util.HideFromJS;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.SpikeFeature;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,6 +29,20 @@ public class Builders {
         @FunctionalInterface
         public interface Builder extends Consumer<EndSpike> {
             void accept(EndSpike spike);
+        }
+    }
+
+    public static class BlockStateProviderRules {
+        @HideFromJS
+        public final List<RuleBasedBlockStateProvider.Rule> rules = new ArrayList<>();
+
+        public void addRule(BlockPredicate condition, BlockStateProvider thenPlace) {
+            rules.add(new RuleBasedBlockStateProvider.Rule(condition, thenPlace));
+        }
+
+        @FunctionalInterface
+        public interface Builder extends Consumer<BlockStateProviderRules> {
+            void accept(BlockStateProviderRules rules);
         }
     }
 }
