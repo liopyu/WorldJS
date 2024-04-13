@@ -59,7 +59,6 @@ public class PlacedFeatureBuilder {
         addSimplePlacement("biome");
     }
 
-    // TODO: Either make a binding for BlockPredicate or make a wrapper for it
     @Info(value = "Adds a `minecraft:block_predicate_filter` placement modifier to the placed feature", params = {
             @Param(name = "blockPredicate", value = "The block predicate used by the modifier")
     })
@@ -104,7 +103,6 @@ public class PlacedFeatureBuilder {
         placements.add(json);
     }
 
-    // TODO: Make a binding/wrapper for HeightProviders
     @Info(value = "Adds a `minecraft:height_range` placement modifier to the placed feature", params = {
             @Param(name = "heightProvider", value = "The height provider used by the modifier")
     })

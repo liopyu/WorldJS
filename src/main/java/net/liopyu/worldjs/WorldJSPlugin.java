@@ -15,7 +15,9 @@ import net.liopyu.worldjs.internal.tests.TestPFeatureMethodHolder;
 import net.liopyu.worldjs.utils.WorldJSTypeWrappers;
 import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.heightproviders.HeightProvider;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 
@@ -63,5 +65,7 @@ public class WorldJSPlugin extends KubeJSPlugin {
         typeWrappers.register(FloatProvider.class, WorldJSTypeWrappers::floatProvider);
         typeWrappers.register(BlockState.class, WorldJSTypeWrappers::blockState);
         typeWrappers.register(BlockPredicate.class, WorldJSTypeWrappers::blockPredicate);
+        typeWrappers.register(HeightProvider.class, WorldJSTypeWrappers::heightProvider);
+        typeWrappers.register(VerticalAnchor.class, WorldJSTypeWrappers::verticalAnchor);
     }
 }
