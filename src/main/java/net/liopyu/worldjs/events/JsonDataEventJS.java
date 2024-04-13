@@ -1,10 +1,12 @@
 package net.liopyu.worldjs.events;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.latvian.mods.kubejs.event.EventJS;
 import dev.latvian.mods.kubejs.event.EventResult;
+import dev.latvian.mods.kubejs.registry.RegistryInfo;
 import dev.latvian.mods.kubejs.script.data.DataPackEventJS;
 import dev.latvian.mods.kubejs.typings.Generics;
 import dev.latvian.mods.kubejs.typings.Info;
@@ -17,12 +19,19 @@ import net.liopyu.worldjs.utils.PlacedFeatureBuilder;
 import net.liopyu.worldjs.utils.Placement;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
+import net.minecraft.world.level.levelgen.placement.CaveSurface;
+import net.minecraft.world.level.material.FluidState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,23 +39,9 @@ import org.jetbrains.annotations.Nullable;
  * 
  * TODO:
  * {@link net.minecraft.world.level.levelgen.feature.Feature#TREE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#BLOCK_PILE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#SPRING}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#FOSSIL}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#HUGE_RED_MUSHROOM}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#HUGE_BROWN_MUSHROOM}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#BLOCK_COLUMN}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#VEGETATION_PATCH}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#WATERLOGGED_VEGETATION_PATCH}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#ROOT_SYSTEM}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#MULTIFACE_GROWTH}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#DISK}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#LAKE}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#SIMPLE_BLOCK}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#NETHER_FOREST_VEGETATION}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#RANDOM_SELECTOR}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#SIMPLE_RANDOM_SELECTOR}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#RANDOM_BOOLEAN_SELECTOR}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#GEODE}
  *
  * Some things to keep in mind:
@@ -54,13 +49,8 @@ import org.jetbrains.annotations.Nullable;
  * - RuleTest has a type wrapper
  * - BlockPos has a type wrapper
  * - IntProvider has a type wrapper
- * - BlockState, BlockPredicate, FloatProvider have wrappers provided by us
- * - OreConfiguration$TargetBlockState, RuleBasedBlockStateProvider can be created
- *
- * Need:
- * - Wrapper/binding for
- *      - BlockStateProvider
- *      - FluidState
+ * - BlockState, BlockPredicate, FloatProvider, BlockStateProvider, FluidState have wrappers provided by us
+ * - OreConfiguration$TargetBlockState, RuleBasedBlockStateProvider, BlockColumnConfiguration$Layer can be created via the WorldJS binding
  */
 @SuppressWarnings("unused")
 public class JsonDataEventJS extends EventJS {
@@ -1002,6 +992,345 @@ public class JsonDataEventJS extends EventJS {
         DataUtils.addProperty(config, "chance_of_spread_radius2", spreadRadius2Chance);
         DataUtils.addProperty(config, "chance_of_spread_radius3", spreadRadius3Chance);
         finishFeature(name, "pointed_dripstone", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.LakeFeature.Configuration#CODEC}
+     */
+    public void lake(String name, BlockStateProvider fluid, BlockStateProvider barrier, Placement placement) {
+        lake(name, fluid, barrier);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.LakeFeature.Configuration#CODEC}
+     */
+    public void lake(String name, BlockStateProvider fluid, BlockStateProvider barrier) {
+        final JsonObject config = new JsonObject();
+        config.add("fluid", DataUtils.encodeBlockStateProvider(fluid));
+        config.add("barrier", DataUtils.encodeBlockStateProvider(barrier));
+        finishFeature(name, "lake", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.DiskConfiguration#CODEC}
+     */
+    public void disk(String name, RuleBasedBlockStateProvider stateProvider, BlockPredicate target, IntProvider radius, int halfHeight, Placement placement) {
+        disk(name, stateProvider, target, radius, halfHeight);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.DiskConfiguration#CODEC}
+     */
+    public void disk(String name, RuleBasedBlockStateProvider stateProvider, BlockPredicate target, IntProvider radius, int halfHeight) {
+        final JsonObject config = new JsonObject();
+        config.add("state_provider", DataUtils.encodeRuleBasedBlockStateProvider(stateProvider));
+        config.add("target", DataUtils.encodeBlockPredicate(target));
+        config.add("radius", DataUtils.encodeIntProvider(radius));
+        config.addProperty("half_height", halfHeight);
+        finishFeature(name, "disk", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration#CODEC}
+     */
+    public void simpleBlock(String name, BlockStateProvider toPlace, Placement placement) {
+        simpleBlock(name, toPlace);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration#CODEC}
+     */
+    public void simpleBlock(String name, BlockStateProvider toPlace) {
+        final JsonObject config = new JsonObject();
+        config.add("to_place", DataUtils.encodeBlockStateProvider(toPlace));
+        finishFeature(name, "simple_block", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SpringConfiguration#CODEC}
+     */
+    public void spring(
+            String name,
+            FluidState fluid,
+            boolean requiresBlockBelow,
+            @Nullable Integer rockCount,
+            @Nullable Integer holeCount,
+            Block[] validBlocks,
+            Placement placement
+    ) {
+        spring(name, fluid, requiresBlockBelow, rockCount, holeCount, validBlocks);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SpringConfiguration#CODEC}
+     */
+    public void spring(
+            String name,
+            FluidState fluid,
+            boolean requiresBlockBelow,
+            @Nullable Integer rockCount,
+            @Nullable Integer holeCount,
+            Block[] validBlocks
+    ) {
+        final JsonObject config = new JsonObject();
+        config.add("state", DataUtils.encode(FluidState.CODEC, fluid));
+        config.addProperty("requires_block_below", requiresBlockBelow);
+        DataUtils.addProperty(config, "rock_count", rockCount);
+        DataUtils.addProperty(config, "hole_count", holeCount);
+        final JsonArray blocks = new JsonArray(validBlocks.length);
+        for (Block block : validBlocks) {
+            blocks.add(RegistryInfo.BLOCK.getId(block).toString());
+        }
+        config.add("valid_blocks", blocks);
+        finishFeature(name, "spring_feature", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.BlockPileConfiguration#CODEC}
+     */
+    public void blockPile(String name, BlockStateProvider stateProvider, Placement placement) {
+        blockPile(name, stateProvider);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.BlockPileConfiguration#CODEC}
+     */
+    public void blockPile(String name, BlockStateProvider stateProvider) {
+        final JsonObject config = new JsonObject();
+        config.add("state_provider", DataUtils.encodeBlockStateProvider(stateProvider));
+        finishFeature(name, "block_pile", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RootSystemConfiguration#CODEC}
+     */
+    public void rootSystem(
+            String name,
+            String treeFeature,
+            int verticalSpaceRequiredForTree,
+            int rootRadius,
+            String rootReplaceableBlockTag,
+            BlockStateProvider rootState,
+            int rootPlacementAttempts,
+            int rootMaxHeight,
+            int hangingRootRadius,
+            int hangingRootsVerticalSpan,
+            BlockStateProvider hangingRootState,
+            int hangingRootPlacementAttempts,
+            int verticalWaterAllowedForTree,
+            BlockPredicate allowedTreePosition,
+            Placement placement
+    ) {
+        rootSystem(name, treeFeature, verticalSpaceRequiredForTree, rootRadius, rootReplaceableBlockTag, rootState, rootPlacementAttempts, rootMaxHeight, hangingRootRadius, hangingRootsVerticalSpan, hangingRootState, hangingRootPlacementAttempts, verticalWaterAllowedForTree, allowedTreePosition);
+        placedFeature(name, placement);
+    }
+
+    // Never change Mojang
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RootSystemConfiguration#CODEC}
+     * Uh, good luck
+     */
+    public void rootSystem(
+            String name,
+            String treeFeature,
+            int verticalSpaceRequiredForTree,
+            int rootRadius,
+            String rootReplaceableBlockTag,
+            BlockStateProvider rootState,
+            int rootPlacementAttempts,
+            int rootMaxHeight,
+            int hangingRootRadius,
+            int hangingRootsVerticalSpan,
+            BlockStateProvider hangingRootState,
+            int hangingRootPlacementAttempts,
+            int verticalWaterAllowedForTree,
+            BlockPredicate allowedTreePosition
+    ) {
+        final JsonObject config = new JsonObject();
+        config.addProperty("feature", treeFeature);
+        config.addProperty("required_vertical_space_for_tree", verticalSpaceRequiredForTree);
+        config.addProperty("root_radius", rootRadius);
+        config.addProperty("root_replaceable", rootReplaceableBlockTag);
+        config.add("root_state_provider", DataUtils.encodeBlockStateProvider(rootState));
+        config.addProperty("root_placement_attempts", rootPlacementAttempts);
+        config.addProperty("root_column_max_height", rootMaxHeight);
+        config.addProperty("hanging_root_radius", hangingRootRadius);
+        config.addProperty("hanging_roots_vertical_span", hangingRootsVerticalSpan);
+        config.add("hanging_roots_state_provider", DataUtils.encodeBlockStateProvider(hangingRootState));
+        config.addProperty("hanging_root_placement_attempts", hangingRootPlacementAttempts);
+        config.addProperty("allowed_vertical_water_for_tree", verticalWaterAllowedForTree);
+        config.add("allowed_tree_position", DataUtils.encodeBlockPredicate(allowedTreePosition));
+        finishFeature(name, "root_system", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.HugeMushroomFeatureConfiguration#CODEC}
+     */
+    public void hugeRedMushroom(String name, BlockStateProvider cap, BlockStateProvider stem, @Nullable Integer foliageRadius, Placement placement) {
+        hugeRedMushroom(name, cap, stem, foliageRadius);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.HugeMushroomFeatureConfiguration#CODEC}
+     */
+    public void hugeRedMushroom(String name, BlockStateProvider cap, BlockStateProvider stem, @Nullable Integer foliageRadius) {
+        hugeShroom(name, cap, stem, foliageRadius, true);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.HugeMushroomFeatureConfiguration#CODEC}
+     */
+    public void hugeBrownMushroom(String name, BlockStateProvider cap, BlockStateProvider stem, @Nullable Integer foliageRadius, Placement placement) {
+        hugeBrownMushroom(name, cap, stem, foliageRadius);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.HugeMushroomFeatureConfiguration#CODEC}
+     */
+    public void hugeBrownMushroom(String name, BlockStateProvider cap, BlockStateProvider stem, @Nullable Integer foliageRadius) {
+        hugeShroom(name, cap, stem, foliageRadius, false);
+    }
+
+    private void hugeShroom(String name, BlockStateProvider cap, BlockStateProvider stem, @Nullable Integer foliageRadius, boolean red) {
+        final JsonObject config = new JsonObject();
+        config.add("cap_provider", DataUtils.encodeBlockStateProvider(cap));
+        config.add("stem_provider", DataUtils.encodeBlockStateProvider(stem));
+        DataUtils.addProperty(config, "foliage_radius", foliageRadius);
+        finishFeature(name, red ? "huge_red_mushroom" : "huge_brown_mushroom", config);
+    }
+
+    /**
+     * {@link BlockColumnConfiguration#CODEC}
+     */
+    public void blockColumn(String name, BlockColumnConfiguration.Layer[] layers, Direction direction, BlockPredicate allowedPlacement, boolean prioritizeTip, Placement placement) {
+        blockColumn(name, layers, direction, allowedPlacement, prioritizeTip);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link BlockColumnConfiguration#CODEC}
+     */
+    public void blockColumn(String name, BlockColumnConfiguration.Layer[] layers, Direction direction, BlockPredicate allowedPlacement, boolean prioritizeTip) {
+        final JsonObject config = new JsonObject();
+        config.add("layers", DataUtils.encodeBlockColumnLayerArray(layers));
+        config.addProperty("direction", direction.getSerializedName());
+        config.add("allowed_placement", DataUtils.encodeBlockPredicate(allowedPlacement));
+        config.addProperty("prioritize_tip", prioritizeTip);
+        finishFeature(name, "block_column", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NetherForestVegetationConfig#CODEC}
+     */
+    public void netherForestVegetation(String name, BlockStateProvider stateProvider, int spreadWidth, int spreadHeight, Placement placement) {
+        netherForestVegetation(name, stateProvider, spreadWidth, spreadHeight);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.NetherForestVegetationConfig#CODEC}
+     */
+    public void netherForestVegetation(String name, BlockStateProvider stateProvider, int spreadWidth, int spreadHeight) {
+        final JsonObject config = new JsonObject();
+        config.add("state_provider", DataUtils.encodeBlockStateProvider(stateProvider));
+        config.addProperty("spread_width", spreadWidth);
+        config.addProperty("spread_height", spreadHeight);
+        finishFeature(name, "nether_forest_vegetation", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SimpleRandomFeatureConfiguration#CODEC}
+     */
+    public void simpleRandomSelector(String name, String[] features, Placement placement) {
+        simpleRandomSelector(name, features);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.SimpleRandomFeatureConfiguration#CODEC}
+     */
+    public void simpleRandomSelector(String name, String[] features) {
+        final JsonObject config = new JsonObject();
+        config.add("features", DataUtils.encodeStringArray(features));
+        finishFeature(name, "simple_random_selector", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomBooleanFeatureConfiguration#CODEC}
+     */
+    public void randomBooleanSelector(String name, String ifTrue, String ifFalse, Placement placement) {
+        randomBooleanSelector(name, ifTrue, ifFalse);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.RandomBooleanFeatureConfiguration#CODEC}
+     */
+    public void randomBooleanSelector(String name, String ifTrue, String ifFalse) {
+        final JsonObject config = new JsonObject();
+        config.addProperty("feature_true", ifTrue);
+        config.addProperty("feature_false", ifFalse);
+        finishFeature(name, "random_boolean_selector", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration#CODEC}
+     */
+    public void vegetationPatch(
+            String name,
+            boolean waterlogged,
+            String replaceableBlockTag,
+            BlockStateProvider groundState,
+            String vegetationFeature,
+            CaveSurface surface,
+            IntProvider depth,
+            float extraBottomBlockChance,
+            int verticalRange,
+            float vegetationChance,
+            IntProvider xzRadius,
+            float extraEdgeColumnChance,
+            Placement placement
+    ) {
+        vegetationPatch(name, waterlogged, replaceableBlockTag, groundState, vegetationFeature, surface, depth, extraBottomBlockChance, verticalRange, vegetationChance, xzRadius, extraEdgeColumnChance);
+        placedFeature(name, placement);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration#CODEC}
+     */
+    public void vegetationPatch(
+            String name,
+            boolean waterlogged,
+            String replaceableBlockTag,
+            BlockStateProvider groundState,
+            String vegetationFeature,
+            CaveSurface surface,
+            IntProvider depth,
+            float extraBottomBlockChance,
+            int verticalRange,
+            float vegetationChance,
+            IntProvider xzRadius,
+            float extraEdgeColumnChance
+    ) {
+        final JsonObject config = new JsonObject();
+        config.addProperty("replaceable", replaceableBlockTag);
+        config.add("ground_state", DataUtils.encodeBlockStateProvider(groundState));
+        config.addProperty("vegetation_feature", vegetationFeature);
+        config.addProperty("surface", surface.getSerializedName());
+        config.add("depth", DataUtils.encodeIntProvider(depth));
+        config.addProperty("extra_bottom_block_chance", extraBottomBlockChance);
+        config.addProperty("vertical_range", verticalRange);
+        config.addProperty("vegetation_chance", vegetationChance);
+        config.add("xz_radius", DataUtils.encodeIntProvider(xzRadius));
+        config.addProperty("extra_edge_column_chance", extraEdgeColumnChance);
+        finishFeature(name, waterlogged ? "waterlogged_vegetation_patch" : "vegetation_patch", config);
     }
 
     @Override

@@ -20,6 +20,7 @@ import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.heightproviders.HeightProvider;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 
@@ -71,5 +72,6 @@ public class WorldJSPlugin extends KubeJSPlugin {
         typeWrappers.register(VerticalAnchor.class, WorldJSTypeWrappers::verticalAnchor);
         typeWrappers.register(BlockStateProvider.class, WorldJSTypeWrappers::blockStateProvider);
         typeWrappers.register(NormalNoise.NoiseParameters.class, WorldJSTypeWrappers::noiseParameters);
+        typeWrappers.register(FluidState.class, WorldJSTypeWrappers::fluidState);
     }
 }

@@ -19,7 +19,10 @@ import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Lazy;
 import org.jetbrains.annotations.ApiStatus;
@@ -80,6 +83,30 @@ public class DataUtils {
         return encode(FloatProvider.CODEC, provider);
     }
 
+    public static JsonElement encodeBlockStateProvider(BlockStateProvider provider) {
+        return encode(BlockStateProvider.CODEC, provider);
+    }
+
+    public static JsonElement encodeRuleBasedBlockStateProvider(RuleBasedBlockStateProvider provider) {
+        return encode(RuleBasedBlockStateProvider.CODEC, provider);
+    }
+
+    public static JsonArray encodeBlockColumnLayerArray(BlockColumnConfiguration.Layer[] layers) {
+        final JsonArray array = new JsonArray(layers.length);
+        for (BlockColumnConfiguration.Layer layer : layers) {
+            array.add(encode(BlockColumnConfiguration.Layer.CODEC, layer));
+        }
+        return array;
+    }
+
+    public static JsonArray encodeStringArray(String[] strings) {
+        final JsonArray array = new JsonArray(strings.length);
+        for (String str : strings) {
+            array.add(str);
+        }
+        return array;
+    }
+
     public static JsonObject randomPatchConfig(@Nullable Integer tries, @Nullable Integer xzSpread, @Nullable Integer ySpread, String placedFeature) {
         final JsonObject json = new JsonObject();
         addProperty(json, "tires", tries);
@@ -103,6 +130,10 @@ public class DataUtils {
     }
     public static void addProperty(JsonObject json, String property, @Nullable String value) {
         if (value != null) json.addProperty(property, value);
+    }
+
+    public static void addProperty(JsonObject json, String property, @Nullable JsonElement value) {
+        if (value != null) json.add(property, value);
     }
 
     // There should never be multiple of these at any one time, so ThreadLocals shouldn't be necessary

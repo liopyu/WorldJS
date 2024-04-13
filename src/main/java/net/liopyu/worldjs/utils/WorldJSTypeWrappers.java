@@ -27,12 +27,11 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.*;
 import net.minecraft.world.level.levelgen.heightproviders.*;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class WorldJSTypeWrappers {
@@ -120,7 +119,7 @@ public class WorldJSTypeWrappers {
                     }
                     yield BlockPredicate.matchesBlocks(offset, blocks);
                 }
-                case "any_of", "anyOf" -> {
+                case "any_of", "anyOf", "any" -> {
                     final List<BlockPredicate> predicates = new ArrayList<>();
                     final List<?> objects = ListJS.orSelf(map.get("predicates"));
                     for (Object obj : objects) {
@@ -128,7 +127,7 @@ public class WorldJSTypeWrappers {
                     }
                     yield BlockPredicate.anyOf(predicates);
                 }
-                case "all_of", "allOf" -> {
+                case "all_of", "allOf", "all" -> {
                     final List<BlockPredicate> predicates = new ArrayList<>();
                     final List<?> objects = ListJS.orSelf(map.get("predicates"));
                     for (Object obj : objects) {
@@ -140,6 +139,9 @@ public class WorldJSTypeWrappers {
             };
         } else if (o instanceof CharSequence) {
             final String type = o.toString();
+            if (type.charAt(0) == '#') {
+                return BlockPredicate.matchesTag(TagKey.create(Registries.BLOCK, new ResourceLocation(type.substring(1))));
+            }
             return switch (type) {
                 case "true", "always_true", "alwaysTrue" -> BlockPredicate.alwaysTrue();
                 case "no_fluid", "noFluid" -> BlockPredicate.noFluid();
@@ -159,26 +161,29 @@ public class WorldJSTypeWrappers {
             return state;
         } else if (o instanceof Block block) {
             return block.defaultBlockState();
-        } else if (o instanceof CharSequence) {
+        } else if (o instanceof CharSequence || o instanceof ResourceLocation) {
             return UtilsJS.parseBlockState(o.toString());
         } else if (o instanceof Map<?,?> map) {
             final Object possibleBlock = GeneralUtils.getFirstOfKeys(map, "name", "Name", "block", "base"); // Pls only pass in a string here k thx
             BlockState state = (possibleBlock == null ? Blocks.AIR : RegistryInfo.BLOCK.getValue(new ResourceLocation(String.valueOf(possibleBlock)))).defaultBlockState();
             final Object key = GeneralUtils.getFirstKeyMapHas(map, "properties", "Properties", "states", "values", "state");
+
             if (key != null) {
                 final Map<?, ?> propertiesMap = MapJS.of(map.get(key));
                 if (propertiesMap != null) {
                     final Collection<Property<?>> stateProperties = state.getProperties();
-                    final AtomicReference<BlockState> stateReference = new AtomicReference<>(state);
                     for (Property<?> property : stateProperties) {
                         final Property<T> castedProperty = UtilsJS.cast(property);
                         if (propertiesMap.containsKey(castedProperty.getName())) {
-                            castedProperty.getValue(String.valueOf(propertiesMap.get(castedProperty.getName()))).ifPresent(value -> stateReference.set(stateReference.get().setValue(castedProperty, value)));
+                            final Optional<T> value = castedProperty.getValue(String.valueOf(propertiesMap.get(castedProperty.getName())));
+                            if (value.isPresent()) {
+                                state = state.setValue(castedProperty, value.get());
+                            }
                         }
                     }
-                    state = stateReference.get();
                 }
             }
+
             return state;
         } else if (o instanceof JsonElement json) {
             final AtomicReference<BlockState> returned = new AtomicReference<>(Blocks.AIR.defaultBlockState());
@@ -284,7 +289,7 @@ public class WorldJSTypeWrappers {
             return BlockStateProvider.simple(state);
         } else if (o instanceof Block block) {
             return BlockStateProvider.simple(block);
-        } else if (o instanceof CharSequence) {
+        } else if (o instanceof CharSequence || o instanceof ResourceLocation) {
             return BlockStateProvider.simple(UtilsJS.parseBlockState(o.toString()));
         } else if (o instanceof JsonElement json) {
             final AtomicReference<BlockStateProvider> returned = new AtomicReference<>(BlockStateProvider.simple(Blocks.AIR));
@@ -345,7 +350,7 @@ public class WorldJSTypeWrappers {
                             holder.scale,
                             ((Number) map.get("threshold")).floatValue(),
                             ((Number) GeneralUtils.getFirstOfKeys(map, "high_chance", "highChance")).floatValue(),
-                            blockState(cx, map.get("default_state")),
+                            blockState(cx, GeneralUtils.getFirstOfKeys(map, "default_state", "defaultState")),
                             lowStates,
                             highStates
                     );
@@ -425,5 +430,76 @@ public class WorldJSTypeWrappers {
         }
 
         return new NormalNoise.NoiseParameters(0, 0D);
+    }
+
+    public static <T extends Comparable<T>> FluidState fluidState(Context cx, @Nullable Object o) {
+        if (o instanceof FluidState state) {
+            return state;
+        } else if (o instanceof Fluid fluid) {
+            return fluid.defaultFluidState();
+        } else if (o instanceof BlockState state) {
+            return state.getFluidState();
+        } else if (o instanceof JsonElement json) {
+            final AtomicReference<FluidState> returned = new AtomicReference<>(Fluids.EMPTY.defaultFluidState());
+            FluidState.CODEC.decode(JsonOps.INSTANCE, json).get().map(l -> {
+                returned.set(l.getFirst());
+                return l;
+            }, r -> {
+                ScriptType.getCurrent(cx).console.warn("Unable to parse fluid state json " + json + " into a FluidState");
+                return r;
+            });
+            return returned.get();
+        } else if (o instanceof CharSequence || o instanceof ResourceLocation) {
+            final String stateString = o.toString();
+            if (stateString.isEmpty()) {
+                return Fluids.EMPTY.defaultFluidState();
+            }
+
+            final int propertiesIndex = stateString.indexOf('[');
+            final boolean hasProperties = propertiesIndex >= 0 && stateString.indexOf(']') == stateString.length() - 1;
+            FluidState state = RegistryInfo.FLUID.getValue(new ResourceLocation(hasProperties ? stateString.substring(0, propertiesIndex) : stateString)).defaultFluidState();
+
+            if (hasProperties) {
+                final String[] properties = stateString.substring(propertiesIndex + 1, stateString.length() - 1).split(",");
+                for (String property : properties) {
+                    final String[] prop = property.split("=", 2);
+                    if (prop.length == 2 && !prop[0].isEmpty() && !prop[1].isEmpty()) {
+                        final Property<T> p = UtilsJS.cast(state.getType().getStateDefinition().getProperty(prop[0]));
+                        if (p != null) {
+                            final Optional<T> value = p.getValue(prop[1]);
+                            if (value.isPresent()) {
+                                state = state.setValue(p, value.get());
+                            }
+                        }
+                    }
+                }
+            }
+
+            return state;
+        } else if (o instanceof Map<?,?> map) {
+            final Object possibleFluid = GeneralUtils.getFirstOfKeys(map, "name", "Name", "fluid", "base");
+            FluidState state = (possibleFluid == null ? Fluids.EMPTY : RegistryInfo.FLUID.getValue(new ResourceLocation(String.valueOf(possibleFluid)))).defaultFluidState();
+            final Object key = GeneralUtils.getFirstKeyMapHas(map, "properties", "Properties", "states", "values", "state");
+
+            if (key != null) {
+                final Map<?, ?> propertiesMap = MapJS.of(map.get(key));
+                if (propertiesMap != null) {
+                    final Collection<Property<?>> stateProperties = state.getProperties();
+                    for (Property<?> property : stateProperties) {
+                        final Property<T> castedProperty = UtilsJS.cast(property);
+                        if (propertiesMap.containsKey(castedProperty.getName())) {
+                            final Optional<T> value = castedProperty.getValue(String.valueOf(propertiesMap.get(castedProperty.getName())));
+                            if (value.isPresent()) {
+                                state = state.setValue(castedProperty, value.get());
+                            }
+                        }
+                    }
+                }
+            }
+
+            return state;
+        }
+
+        return Fluids.EMPTY.defaultFluidState();
     }
 }
