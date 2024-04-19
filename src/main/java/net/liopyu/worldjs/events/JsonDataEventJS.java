@@ -20,11 +20,15 @@ import net.liopyu.worldjs.utils.Placement;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.GeodeBlockSettings;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
@@ -34,6 +38,8 @@ import net.minecraft.world.level.levelgen.placement.CaveSurface;
 import net.minecraft.world.level.material.FluidState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Methods for creating configured features found in {@link net.minecraft.world.level.levelgen.feature.Feature}
  * 
@@ -42,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
  * {@link net.minecraft.world.level.levelgen.feature.Feature#FOSSIL}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#MULTIFACE_GROWTH}
  * {@link net.minecraft.world.level.levelgen.feature.Feature#RANDOM_SELECTOR}
- * {@link net.minecraft.world.level.levelgen.feature.Feature#GEODE}
  *
  * Some things to keep in mind:
  * - It should be fine to use registry objects here
@@ -51,6 +56,9 @@ import org.jetbrains.annotations.Nullable;
  * - IntProvider has a type wrapper
  * - BlockState, BlockPredicate, FloatProvider, BlockStateProvider, FluidState have wrappers provided by us
  * - OreConfiguration$TargetBlockState, RuleBasedBlockStateProvider, BlockColumnConfiguration$Layer can be created via the WorldJS binding
+ *
+ * Need:
+ * - StructureProcessor wrapper for fossils
  */
 @SuppressWarnings("unused")
 public class JsonDataEventJS extends EventJS {
@@ -1331,6 +1339,121 @@ public class JsonDataEventJS extends EventJS {
         config.add("xz_radius", DataUtils.encodeIntProvider(xzRadius));
         config.addProperty("extra_edge_column_chance", extraEdgeColumnChance);
         finishFeature(name, waterlogged ? "waterlogged_vegetation_patch" : "vegetation_patch", config);
+    }
+
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.GeodeConfiguration#CODEC}
+     */
+    public void geode(
+            String name,
+            BlockStateProvider fillingProvider,
+            BlockStateProvider innerLayerProvider,
+            BlockStateProvider altInnerLayerProvider,
+            BlockStateProvider middleLayerProvider,
+            BlockStateProvider outerLayerProvider,
+            BlockState[] innerPlacements,
+            ResourceLocation cannotReplace,
+            ResourceLocation invalidBlocks,
+            @Nullable Double fillingRange,
+            @Nullable Double innerLayerRange,
+            @Nullable Double middleLayerRange,
+            @Nullable Double outerLayerRange,
+            @Nullable Double generateCrackChance,
+            @Nullable Double baseCrackSize,
+            @Nullable Integer crackPointOffset,
+            @Nullable Double usePotentialPlacementsChance,
+            @Nullable Double useAlternateLayer0Chance,
+            boolean placementsRequireLayer0Alternate,
+            @Nullable IntProvider outerWallDistance,
+            @Nullable IntProvider distributionPoints,
+            @Nullable IntProvider pointOffset,
+            @Nullable Integer minGenOffset,
+            @Nullable Integer maxGenOffset,
+            @Nullable Double noiseMultiplier,
+            int invalidBlocksThreshold,
+            Placement placement
+    ) {
+        geode(
+                name, fillingProvider, innerLayerProvider, altInnerLayerProvider, middleLayerProvider,
+                outerLayerProvider, innerPlacements, cannotReplace, invalidBlocks, fillingRange,
+                innerLayerRange, middleLayerRange, outerLayerRange, generateCrackChance,
+                baseCrackSize, crackPointOffset, usePotentialPlacementsChance, useAlternateLayer0Chance,
+                placementsRequireLayer0Alternate, outerWallDistance, distributionPoints, pointOffset,
+                minGenOffset, maxGenOffset, noiseMultiplier, invalidBlocksThreshold
+        );
+        placedFeature(name, placement);
+    }
+
+    // The price we pay for peace
+    /**
+     * {@link net.minecraft.world.level.levelgen.feature.configurations.GeodeConfiguration#CODEC}
+     */
+    public void geode(
+            String name,
+            BlockStateProvider fillingProvider,
+            BlockStateProvider innerLayerProvider,
+            BlockStateProvider altInnerLayerProvider,
+            BlockStateProvider middleLayerProvider,
+            BlockStateProvider outerLayerProvider,
+            BlockState[] innerPlacements,
+            ResourceLocation cannotReplace,
+            ResourceLocation invalidBlocks,
+            @Nullable Double fillingRange,
+            @Nullable Double innerLayerRange,
+            @Nullable Double middleLayerRange,
+            @Nullable Double outerLayerRange,
+            @Nullable Double generateCrackChance,
+            @Nullable Double baseCrackSize,
+            @Nullable Integer crackPointOffset,
+            @Nullable Double usePotentialPlacementsChance,
+            @Nullable Double useAlternateLayer0Chance,
+            boolean placementsRequireLayer0Alternate,
+            @Nullable IntProvider outerWallDistance,
+            @Nullable IntProvider distributionPoints,
+            @Nullable IntProvider pointOffset,
+            @Nullable Integer minGenOffset,
+            @Nullable Integer maxGenOffset,
+            @Nullable Double noiseMultiplier,
+            int invalidBlocksThreshold
+    ) {
+        final GeodeBlockSettings blockSettings = new GeodeBlockSettings(
+                fillingProvider,
+                innerLayerProvider,
+                altInnerLayerProvider,
+                middleLayerProvider,
+                outerLayerProvider,
+                List.of(innerPlacements),
+                TagKey.create(Registries.BLOCK, cannotReplace),
+                TagKey.create(Registries.BLOCK, invalidBlocks)
+        );
+        final JsonElement blocks = DataUtils.encode(GeodeBlockSettings.CODEC, blockSettings);
+
+        final JsonObject layers = new JsonObject();
+        DataUtils.addProperty(layers, "filling", fillingRange);
+        DataUtils.addProperty(layers, "inner_layer", innerLayerRange);
+        DataUtils.addProperty(layers, "middle_layer", middleLayerRange);
+        DataUtils.addProperty(layers, "outer_layer", outerLayerRange);
+
+        final JsonObject crack = new JsonObject();
+        DataUtils.addProperty(crack, "generate_crack_chance", generateCrackChance);
+        DataUtils.addProperty(crack, "base_crack_size", baseCrackSize);
+        DataUtils.addProperty(crack, "crack_point_offset", crackPointOffset);
+
+        final JsonObject config = new JsonObject();
+        config.add("blocks", blocks);
+        config.add("layers", layers);
+        config.add("crack", crack);
+        DataUtils.addProperty(config, "use_potential_placements_chance", usePotentialPlacementsChance);
+        DataUtils.addProperty(config, "use_alternate_layer0_chance", useAlternateLayer0Chance);
+        DataUtils.addProperty(config, "placements_require_layer0_alternate", placementsRequireLayer0Alternate);
+        config.add("outer_wall_distance", DataUtils.encodeIntProvider(outerWallDistance == null ? UniformInt.of(4, 5) : outerWallDistance));
+        config.add("distribution_points", DataUtils.encodeIntProvider(distributionPoints == null ? UniformInt.of(3, 4) : distributionPoints));
+        config.add("point_offset", DataUtils.encodeIntProvider(pointOffset == null ? UniformInt.of(1, 2) : pointOffset));
+        DataUtils.addProperty(config, "min_gen_offset", minGenOffset);
+        DataUtils.addProperty(config, "max_gen_offset", maxGenOffset);
+        DataUtils.addProperty(config, "noise_multiplier", noiseMultiplier);
+        config.addProperty("invalid_blocks_threshold", invalidBlocksThreshold);
+        finishFeature(name, "geode", config);
     }
 
     @Override
