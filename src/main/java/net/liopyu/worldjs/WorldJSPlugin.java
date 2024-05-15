@@ -14,10 +14,13 @@ import net.liopyu.worldjs.internal.tests.TestCFeatureMethodHolder;
 import net.liopyu.worldjs.internal.tests.TestPFeatureMethodHolder;
 import net.liopyu.worldjs.utils.WorldJSTypeWrappers;
 import net.minecraft.util.valueproviders.FloatProvider;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.feature.stateproviders.RuleBasedBlockStateProvider;
 import net.minecraft.world.level.levelgen.heightproviders.HeightProvider;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.material.FluidState;
@@ -41,6 +44,10 @@ public class WorldJSPlugin extends KubeJSPlugin {
     @Override
     public void registerBindings(BindingsEvent event) {
         event.add("WorldJS", WorldJSBindings.class);
+        event.add("BlockStateProvider", BlockStateProvider.class);
+        event.add("IntProvider", IntProvider.class);
+        event.add("UniformInt", UniformInt.class);
+        event.add("RuleBasedBlockStateProvider", RuleBasedBlockStateProvider.class);
         if (event.getType().isServer()) {
             // This is here because dumb stuff relating to the server script manager not existing until the server starts
             // Oh, the pain it took to get to here in KubeJS TFC, if only this method had been I dunno, documented!
