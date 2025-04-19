@@ -3,10 +3,13 @@ package net.liopyu.worldjs;
 import dev.architectury.platform.Platform;
 import dev.latvian.mods.kubejs.KubeJSPlugin;
 import dev.latvian.mods.kubejs.bindings.event.ServerEvents;
+import dev.latvian.mods.kubejs.registry.RegistryInfo;
 import dev.latvian.mods.kubejs.script.BindingsEvent;
 import dev.latvian.mods.kubejs.script.ScriptType;
 import dev.latvian.mods.kubejs.util.ClassFilter;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
+import net.liopyu.worldjs.builders.FeatureBuilder;
+import net.liopyu.worldjs.builders.PlacementModifierTypeBuilder;
 import net.liopyu.worldjs.events.EventHandlers;
 import net.liopyu.worldjs.events.forge.AddCFeatureMethodsEvent;
 import net.liopyu.worldjs.events.forge.AddPFeatureMethodsEvent;
@@ -36,6 +39,8 @@ public class WorldJSPlugin extends KubeJSPlugin {
                 event.add("test", TestPFeatureMethodHolder.INSTANCE);
             });
         }
+        RegistryInfo.PLACEMENT_MODIFIER_TYPE.addType("worldjs:placement_modifier", PlacementModifierTypeBuilder.class, PlacementModifierTypeBuilder::new);
+        RegistryInfo.FEATURE.addType("worldjs:feature", FeatureBuilder.class, FeatureBuilder::new);
     }
 
     @Override

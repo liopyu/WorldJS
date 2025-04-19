@@ -14,6 +14,7 @@ public class WorldJS {
 
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    // TODO: No, this is terrible. I don't care what has to be done, do better
     private static Consumer<ImmutableMap.Builder<String, Object>> modBindings = b -> {};
 
     public WorldJS() {

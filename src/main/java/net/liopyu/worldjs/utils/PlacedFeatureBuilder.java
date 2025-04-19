@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import dev.latvian.mods.kubejs.typings.Generics;
 import dev.latvian.mods.kubejs.typings.Info;
 import dev.latvian.mods.kubejs.typings.Param;
+import dev.latvian.mods.rhino.util.HideFromJS;
 import net.liopyu.worldjs.api.IPFeatureMethodHolder;
 import net.minecraft.core.Direction;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -196,6 +197,7 @@ public class PlacedFeatureBuilder {
         return json;
     }
 
+    @HideFromJS
     public JsonObject toJson() {
         DataUtils.setPfb(null);
         final JsonObject json = new JsonObject();
